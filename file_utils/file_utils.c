@@ -23,7 +23,6 @@ void receive_file(int client_socket, const char *output_filename) {
     printf("File size: %ld\n", bytes_remain);
 
     while (bytes_remain > 0 && (bytes_received = recv(client_socket, buffer, sizeof(buffer), 0)) > 0) {
-        printf("%s", buffer);
         fwrite(buffer, 1, bytes_received, file);
         bytes_remain -= bytes_received;
     }

@@ -22,6 +22,7 @@ void prefix_tree_insert_word_with_col_words(prefix_tree *parent, const char *wor
             prefix_tree *tmp = malloc(sizeof(prefix_tree));
             cur_node->children[ch] = tmp;
             tmp->character = *word;
+            tmp->words_here = 0;
             memset(tmp->children, 0, sizeof(prefix_tree*)*ALPHABET_SIZE);
             cur_node = tmp;
         }
@@ -100,7 +101,14 @@ void prefix_tree_print(const prefix_tree *ptree) {
     free(buffer);
 }
 
-
+void prefix_tree_destroy(prefix_tree *ptree) {
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        if (ptree->children[i] != 0) {
+            prefix_tree_destroy(ptree->children[i]);
+        }
+    }
+    free(ptree);
+}
 
 
 

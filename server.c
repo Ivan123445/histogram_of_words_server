@@ -46,6 +46,7 @@ prefix_tree *handle_file_parts_parallel(char *filename, long *file_parts, size_t
   prefix_tree *main_ptree = prefix_tree_init();
   for (int i = 0; i < NUM_THREADS; i++) {
     prefix_tree_insert_tree(main_ptree, prefix_trees[i]);
+    prefix_tree_destroy(prefix_trees[i]);
   }
 
   free(threads);
@@ -129,7 +130,8 @@ int main(const int argc, char *argv[]) {
     prefix_tree_print(main_ptree);
     printf("Sending ptree...\n");
     send_ptree(main_ptree, client_socket);
-
+    printf("Sending completed\n");
+    prefix_tree_destroy(main_ptree);
     close(client_socket);
     printf("Client disconnected.\n");
   }

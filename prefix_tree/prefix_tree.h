@@ -30,6 +30,7 @@ prefix_tree *prefix_tree_init();
 void *get_prefix_tree_by_text(void *arg);
 void prefix_tree_insert_tree(prefix_tree *parent, prefix_tree *child);
 void prefix_tree_print(const prefix_tree *ptree);
+void prefix_tree_destroy(prefix_tree *ptree);
 
 
 #endif // PREFIX_TREE_H
