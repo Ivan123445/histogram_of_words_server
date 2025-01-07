@@ -14,7 +14,7 @@ prefix_tree *prefix_tree_init() {
 void prefix_tree_insert_word_with_col_words(prefix_tree *parent, const char *word, const size_t words_here) {
     for (size_t i = 0; i < 100000; i++) {}
     prefix_tree *cur_node = parent;
-    for (;*word != '\0' && *word != ' '; ++word) {
+    for (;*word != '\0' && *word != ' ' && *word != '.' && *word != ','; ++word) {
         unsigned char ch = *word;
         if (cur_node->children[ch] != 0) {
             cur_node = cur_node->children[ch];
@@ -69,16 +69,36 @@ void *get_prefix_tree_by_text(void *arg) {
     fseek(file, start, SEEK_SET);
 
     prefix_tree *ptree = prefix_tree_init();
-    char buffer[BUFFER_SIZE] = {0};
-    int i = 0;
-    while (ftell(file) < end - 1 && get_word(file, buffer, BUFFER_SIZE) == 1) {
+    char buffer[MAX_WORD_LENGTH] = {0};
+    while (ftell(file) < end - 1 && get_word(file, buffer, MAX_WORD_LENGTH) == 1) {
         prefix_tree_insert_word(ptree, buffer);
     }
     return ptree;
 }
 
 
+void prefix_tree_print_recursive(const prefix_tree *tree, char *buffer, const size_t depth) {
+    buffer[depth] = tree->character;
+    if (tree->words_here) {
+        buffer[depth + 1] = '\0';
+        printf("%s", buffer);
+        printf(": %lu\n", tree->words_here);
+    }
+    for (size_t i = 0; i < ALPHABET_SIZE; i++) {
+        if (tree->children[i] != 0) {
+            prefix_tree_print_recursive(tree->children[i], buffer, depth + 1);
+        }
+    }
+}
 
+void prefix_tree_print(const prefix_tree *ptree) {
+    char *buffer = malloc(ALPHABET_SIZE * sizeof(char));
+    memset(buffer, '\0', MAX_WORD_LENGTH);
+
+    prefix_tree_print_recursive(ptree, buffer, -1);
+
+    free(buffer);
+}
 
 
 

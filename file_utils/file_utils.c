@@ -8,20 +8,24 @@
 #include <ctype.h>
 
 
-void receive_file(int server_socket, const char *output_filename) {
+void receive_file(int client_socket, const char *output_filename) {
     FILE *file = fopen(output_filename, "w");
     if (file == NULL) {
         perror("File opening failed");
-        close(server_socket);
+        close(client_socket);
         return;
     }
 
     char buffer[1024];
     ssize_t bytes_received;
+    long bytes_remain;
+    recv(client_socket, (char*)&bytes_remain, sizeof(bytes_remain), 0);
+    printf("File size: %ld\n", bytes_remain);
 
-    // Получаем данные от сервера
-    while ((bytes_received = recv(server_socket, buffer, sizeof(buffer), 0)) > 0) {
+    while (bytes_remain > 0 && (bytes_received = recv(client_socket, buffer, sizeof(buffer), 0)) > 0) {
+        printf("%s", buffer);
         fwrite(buffer, 1, bytes_received, file);
+        bytes_remain -= bytes_received;
     }
 
     if (bytes_received == -1) {
@@ -29,7 +33,6 @@ void receive_file(int server_socket, const char *output_filename) {
     }
 
     fclose(file);
-    close(server_socket);
 }
 
 int is_word_start(char prev, char curr) {

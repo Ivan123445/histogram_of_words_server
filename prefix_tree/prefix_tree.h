@@ -11,7 +11,6 @@
 
 #define MAX_WORD_LENGTH 256
 #define ALPHABET_SIZE 1024
-#define BUFFER_SIZE 256
 
 typedef struct prefix_tree {
     struct prefix_tree *root;
