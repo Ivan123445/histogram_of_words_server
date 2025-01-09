@@ -7,7 +7,7 @@
 #include "net_utils/net_utils.h"
 #include "prefix_tree/prefix_tree.h"
 
-#define NUM_THREADS 4
+#define NUM_THREADS_BY_DEFAULT 4
 
 prefix_tree *handle_file_parts_parallel(char *filename, long *file_parts, size_t num_parts) {
   pthread_t *threads = malloc(sizeof(pthread_t) * num_parts);
@@ -62,9 +62,8 @@ void handle_arguments(const int argc, char *argv[]) {
 
 int main(const int argc, char *argv[]) {
   handle_arguments(argc, argv);
-  struct sockaddr_in client_addr;
-  socklen_t client_len = sizeof(client_addr);
   char *filename = generate_filename();
+  const int num_threads = get_col_cores() - 1;
 
   async_handle_broadcast();
 
