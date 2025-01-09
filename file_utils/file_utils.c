@@ -1,12 +1,14 @@
 #include "file_utils.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <ctype.h>
 
+char *generate_filename() {
+    srand(time(0));
+    static char filename[100];
+    int random_number = rand() % 10000;
+
+    snprintf(filename, sizeof(filename), "%s_%d", FILENAME_PREFIX, random_number);
+    return filename;
+}
 
 void receive_file(int client_socket, const char *output_filename) {
     FILE *file = fopen(output_filename, "w");
