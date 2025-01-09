@@ -60,6 +60,16 @@ void handle_arguments(const int argc, char *argv[]) {
   exit(EXIT_FAILURE);
 }
 
+int get_col_cores() {
+  int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+  if (num_cores < 1) {
+    num_cores = NUM_THREADS_BY_DEFAULT;
+    printf("The number of cores could not be determined, the default value is used\n");
+  }
+  printf("Number of threads used: %d\n", num_cores);
+  return num_cores;
+}
+
 int main(const int argc, char *argv[]) {
   handle_arguments(argc, argv);
   char *filename = generate_filename();
