@@ -4,26 +4,50 @@
 
 prefix_tree *prefix_tree_init() {
     prefix_tree *ptree = malloc(sizeof(prefix_tree));
-    memset(ptree->children, 0, sizeof(prefix_tree*)*ALPHABET_SIZE);
     ptree->words_here = 0;
     ptree->character = 0;
+    ptree->col_children = 0;
+    ptree->childrens = NULL;
     return ptree;
 }
 
+prefix_tree *prefix_tree_find_in_children(prefix_tree *ptree, char ch) {
+    for (int i = 0; i < ptree->col_children; ++i) {
+        if (ptree->childrens[i]->character == ch) {
+            return ptree->childrens[i];
+        }
+    }
+    return NULL;
+}
+
+prefix_tree *prefix_tree_add_children(prefix_tree *ptree, char ch) {
+    prefix_tree *tmp = malloc(sizeof(prefix_tree));
+    tmp->character = ch;
+    tmp->words_here = 0;
+    tmp->col_children = 0;
+    tmp->childrens = NULL;
+
+    prefix_tree **new_childrens = malloc(sizeof(prefix_tree*) * (ptree->col_children + 1));
+    for (int i = 0; i < ptree->col_children; ++i) {
+        new_childrens[i] = ptree->childrens[i];
+    }
+    new_childrens[ptree->col_children] = tmp;
+    free(ptree->childrens);
+    ptree->childrens = new_childrens;
+    ptree->col_children++;
+    return tmp;
+}
+
 void prefix_tree_insert_word_with_col_words(prefix_tree *parent, const char *word, const size_t words_here) {
-    for (size_t i = 0; i < 100000; i++) {}
+    // for (size_t i = 0; i < 100000; i++) {}
     prefix_tree *cur_node = parent;
     for (;*word != '\0' && *word != ' ' && *word != '.' && *word != ','; ++word) {
         const unsigned char ch = *word - ALPHABET_OFFSET;
-        if (cur_node->children[ch] != 0) {
-            cur_node = cur_node->children[ch];
-        } else {
-            prefix_tree *tmp = malloc(sizeof(prefix_tree));
-            cur_node->children[ch] = tmp;
-            tmp->character = ch;
-            tmp->words_here = 0;
-            memset(tmp->children, 0, sizeof(prefix_tree*)*ALPHABET_SIZE);
+        prefix_tree *tmp = prefix_tree_find_in_children(cur_node, ch);
+        if (tmp != NULL) {
             cur_node = tmp;
+        } else {
+            cur_node = prefix_tree_add_children(cur_node, ch);
         }
     }
     cur_node->words_here += words_here;
@@ -41,10 +65,8 @@ void prefix_tree_insert_tree_recursive(prefix_tree* parent, const prefix_tree *c
         buffer[depth + 1] = '\0';
         prefix_tree_insert_word_with_col_words(parent, buffer, child->words_here);
     }
-    for (size_t i = 0; i < ALPHABET_SIZE; i++) {
-        if (child->children[i] != 0) {
-            prefix_tree_insert_tree_recursive(parent, child->children[i], buffer, depth + 1);
-        }
+    for (size_t i = 0; i < child->col_children; i++) {
+        prefix_tree_insert_tree_recursive(parent, child->childrens[i], buffer, depth + 1);
     }
 }
 
@@ -91,10 +113,8 @@ void prefix_tree_print_recursive(const prefix_tree *tree, char *buffer, int dept
         printf("%s", buffer);
         printf(": %d\n", tree->words_here);
     }
-    for (size_t i = 0; i < ALPHABET_SIZE; i++) {
-        if (tree->children[i] != 0) {
-            prefix_tree_print_recursive(tree->children[i], buffer, depth + 1);
-        }
+    for (size_t i = 0; i < tree->col_children; i++) {
+        prefix_tree_print_recursive(tree->childrens[i], buffer, depth + 1);
     }
 }
 
@@ -108,11 +128,10 @@ void prefix_tree_print(const prefix_tree *ptree) {
 }
 
 void prefix_tree_destroy(prefix_tree *ptree) {
-    for (int i = 0; i < ALPHABET_SIZE; i++) {
-        if (ptree->children[i] != 0) {
-            prefix_tree_destroy(ptree->children[i]);
-        }
+    for (int i = 0; i < ptree->col_children; i++) {
+        prefix_tree_destroy(ptree->childrens[i]);
     }
+    free(ptree->childrens);
     free(ptree);
 }
 

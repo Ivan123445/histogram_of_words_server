@@ -14,8 +14,9 @@
 #define ALPHABET_OFFSET 48
 
 typedef struct prefix_tree {
-    struct prefix_tree *children[ALPHABET_SIZE];
+    struct prefix_tree **childrens;
     char character;
+    unsigned short col_children;
     unsigned short words_here;
 } prefix_tree;
 

@@ -35,10 +35,8 @@ void send_ptree_recursive(const prefix_tree *tree, char *buffer, int depth, int 
             exit(EXIT_FAILURE);
         }
     }
-    for (size_t i = 0; i < ALPHABET_SIZE; i++) {
-        if (tree->children[i] != 0) {
-            send_ptree_recursive(tree->children[i], buffer, depth + 1, client_socket);
-        }
+    for (size_t i = 0; i < tree->col_children; i++) {
+        send_ptree_recursive(tree->childrens[i], buffer, depth + 1, client_socket);
     }
 }
 
