@@ -26,12 +26,14 @@ void send_ptree_recursive(const prefix_tree *tree, char *buffer, int depth, int 
     if (tree->words_here) {
         buffer[depth + 1] = '\0';
         struct ptree_word pword;
-        memset(&pword, 0, sizeof(struct ptree_word));
         memcpy(&pword.word, buffer, strlen(buffer));
         pword.col_words = htons(tree->words_here);
 
-        printf("Sending prefix: %s\n", pword.word);
-        send_all(client_socket, &pword, sizeof(struct ptree_word));
+        if (send_all(client_socket, &pword, sizeof(struct ptree_word)) < 0) {
+            perror("send_ptree: ");
+            close(client_socket);
+            exit(EXIT_FAILURE);
+        }
     }
     for (size_t i = 0; i < ALPHABET_SIZE; i++) {
         if (tree->children[i] != 0) {
