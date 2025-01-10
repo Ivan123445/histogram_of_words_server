@@ -82,8 +82,8 @@ void *get_prefix_tree_by_text(void *arg) {
     long start = args->start;
     long end = args->end;
 
-    FILE *file = fopen(filename, "r");
     printf("Filename: %s\n", filename);
+    FILE *file = fopen(filename, "r");
     if (file == NULL) {
         perror("Не удалось открыть файл");
         exit(EXIT_FAILURE);

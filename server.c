@@ -18,7 +18,7 @@ prefix_tree *handle_file_parts_parallel(char *filename, long *file_parts, size_t
     thread_args_massive[i].filename = filename;
     thread_args_massive[i].start = file_parts[i];
     thread_args_massive[i].end = file_parts[i+1];
-
+    printf("Creating thread %d\n", i);
     if (pthread_create(&threads[i], NULL, get_prefix_tree_by_text, &thread_args_massive[i]) != 0) {
       perror("pthread_create");
       exit(EXIT_FAILURE);
