@@ -98,9 +98,9 @@ int main(const int argc, char *argv[]) {
     long* file_parts = split_file(filename, num_threads);
     printf("File splitted\n");
     prefix_tree *main_ptree = handle_file_parts_parallel(filename, file_parts, num_threads);
-    prefix_tree_print(main_ptree);
+    // prefix_tree_print(main_ptree);
     printf("Sending ptree...\n");
-    // send_ptree(main_ptree, client_socket);
+    send_ptree(main_ptree, client_socket);
     printf("Sending completed\n");
     close(client_socket);
     prefix_tree_destroy(main_ptree);

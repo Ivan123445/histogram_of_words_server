@@ -41,10 +41,11 @@ int is_word_start(char prev, char curr) {
 }
 
 long* split_file(char* filename, size_t col_parts) {
+    printf("Filename: %s\n", filename);
     FILE* file = fopen(filename, "r");
     if (!file) {
         perror("Не удалось открыть файл");
-        return NULL;
+        exit(EXIT_FAILURE);
     }
 
     // Определяем размер файла
