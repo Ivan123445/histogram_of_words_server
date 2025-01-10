@@ -10,13 +10,11 @@
 #include "../file_utils/file_utils.h"
 
 #define MAX_WORD_LENGTH 20
-#define ALPHABET_SIZE 75
-#define ALPHABET_OFFSET 48
 
 typedef struct prefix_tree {
     struct prefix_tree **childrens;
     char character;
-    unsigned short col_children;
+    unsigned char col_children;
     unsigned short words_here;
 } prefix_tree;
 

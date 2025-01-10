@@ -24,6 +24,7 @@ prefix_tree *handle_file_parts_parallel(char *filename, long *file_parts, size_t
       exit(EXIT_FAILURE);
     }
   }
+  free(thread_args_massive);
 
   for (int i = 0; i < num_parts; i++) {
     if (pthread_join(threads[i], (void**)&prefix_trees[i]) != 0) {
@@ -31,15 +32,16 @@ prefix_tree *handle_file_parts_parallel(char *filename, long *file_parts, size_t
       exit(EXIT_FAILURE);
     }
   }
+  free(threads);
 
-  prefix_tree *main_ptree = prefix_tree_init();
-  for (int i = 0; i < num_parts; i++) {
+  prefix_tree *main_ptree = prefix_trees[0];
+  for (int i = 1; i < num_parts; i++) {
+    printf("Start inserting\n");
     prefix_tree_insert_tree(main_ptree, prefix_trees[i]);
     prefix_tree_destroy(prefix_trees[i]);
+    printf("Inserted: %d\n", i);
   }
 
-  free(threads);
-  free(thread_args_massive);
   free(prefix_trees);
   return main_ptree;
 }
@@ -96,9 +98,9 @@ int main(const int argc, char *argv[]) {
     long* file_parts = split_file(filename, num_threads);
     printf("File splitted\n");
     prefix_tree *main_ptree = handle_file_parts_parallel(filename, file_parts, num_threads);
-    // prefix_tree_print(main_ptree);
+    prefix_tree_print(main_ptree);
     printf("Sending ptree...\n");
-    send_ptree(main_ptree, client_socket);
+    // send_ptree(main_ptree, client_socket);
     printf("Sending completed\n");
     close(client_socket);
     prefix_tree_destroy(main_ptree);

@@ -21,7 +21,7 @@ ssize_t send_all(int sock, const void *buffer, size_t length) {
 
 void send_ptree_recursive(const prefix_tree *tree, char *buffer, int depth, int client_socket) {
     if (depth >= 0) {
-        buffer[depth] = tree->character + ALPHABET_OFFSET;
+        buffer[depth] = tree->character;
     }
     if (tree->words_here) {
         buffer[depth + 1] = '\0';

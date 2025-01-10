@@ -21,11 +21,8 @@ prefix_tree *prefix_tree_find_in_children(prefix_tree *ptree, char ch) {
 }
 
 prefix_tree *prefix_tree_add_children(prefix_tree *ptree, char ch) {
-    prefix_tree *tmp = malloc(sizeof(prefix_tree));
+    prefix_tree *tmp = prefix_tree_init();
     tmp->character = ch;
-    tmp->words_here = 0;
-    tmp->col_children = 0;
-    tmp->childrens = NULL;
 
     prefix_tree **new_childrens = malloc(sizeof(prefix_tree*) * (ptree->col_children + 1));
     for (int i = 0; i < ptree->col_children; ++i) {
@@ -42,7 +39,7 @@ void prefix_tree_insert_word_with_col_words(prefix_tree *parent, const char *wor
     // for (size_t i = 0; i < 100000; i++) {}
     prefix_tree *cur_node = parent;
     for (;*word != '\0' && *word != ' ' && *word != '.' && *word != ','; ++word) {
-        const unsigned char ch = *word - ALPHABET_OFFSET;
+        const char ch = *word;
         prefix_tree *tmp = prefix_tree_find_in_children(cur_node, ch);
         if (tmp != NULL) {
             cur_node = tmp;
@@ -59,7 +56,7 @@ void prefix_tree_insert_word(prefix_tree *parent, const char *word) {
 
 void prefix_tree_insert_tree_recursive(prefix_tree* parent, const prefix_tree *child, char *buffer, int depth) {
     if (depth >= 0) {
-        buffer[depth] = child->character + ALPHABET_OFFSET;
+        buffer[depth] = child->character;
     }
     if (child->words_here) {
         buffer[depth + 1] = '\0';
@@ -106,7 +103,7 @@ void *get_prefix_tree_by_text(void *arg) {
 
 void prefix_tree_print_recursive(const prefix_tree *tree, char *buffer, int depth) {
     if (depth >= 0) {
-        buffer[depth] = tree->character + ALPHABET_OFFSET;
+        buffer[depth] = tree->character;
     }
     if (tree->words_here) {
         buffer[depth + 1] = '\0';
