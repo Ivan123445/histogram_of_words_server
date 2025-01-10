@@ -3,15 +3,20 @@
 char server_ips[MAX_PCS][INET_ADDRSTRLEN];
 int server_count = 0;
 
-void send_ptree_recursive(const prefix_tree *tree, char *buffer, const size_t depth, int client_socket) {
-    buffer[depth] = tree->character;
+void send_ptree_recursive(const prefix_tree *tree, char *buffer, int depth, int client_socket) {
+    if (depth >= 0) {
+        buffer[depth] = tree->character + ALPHABET_OFFSET;
+    }
     if (tree->words_here) {
         buffer[depth + 1] = '\0';
         struct ptree_word pword;
-        memcpy(&pword.word, buffer, strlen(buffer)+1);
-        pword.col_words = htonl(tree->words_here);
+        memset(&pword, 0, sizeof(struct ptree_word));
+        memcpy(&pword.word, buffer, strlen(buffer));
+        pword.col_words = htons(tree->words_here);
 
-        send(client_socket, (char *)&pword, sizeof(pword), 0);
+        printf("Sending prefix: %s\n", pword.word);
+        send(client_socket, &pword, sizeof(pword), 0);
+        for (int i = 0; i < 100000; i++) {}
     }
     for (size_t i = 0; i < ALPHABET_SIZE; i++) {
         if (tree->children[i] != 0) {
@@ -21,8 +26,8 @@ void send_ptree_recursive(const prefix_tree *tree, char *buffer, const size_t de
 }
 
 void send_ptree(prefix_tree *tree, int client_socket) {
-    char *buffer = malloc(ALPHABET_SIZE * sizeof(char));
-    memset(buffer, '\0', MAX_WORD_LENGTH);
+    char *buffer = malloc(MAX_WORD_LENGTH * sizeof(char));
+    memset(buffer, '\0', MAX_WORD_LENGTH * sizeof(char));
 
     send_ptree_recursive(tree, buffer, -1, client_socket);
 
@@ -67,8 +72,6 @@ void find_servers(char server_ips[][INET_ADDRSTRLEN], int *server_count) {
     fd_set read_fds;
     struct timeval timeout;
 
-    *server_count = 0;
-
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
         perror("Socket creation failed");
@@ -89,32 +92,42 @@ void find_servers(char server_ips[][INET_ADDRSTRLEN], int *server_count) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Broadcast message sent. Waiting for responses...\n");
 
     FD_ZERO(&read_fds);
     FD_SET(sock, &read_fds);
 
-    timeout.tv_sec = 1;
+    timeout.tv_sec = 3;
     timeout.tv_usec = 0;
 
+    *server_count = 0;
     while (select(sock + 1, &read_fds, NULL, NULL, &timeout) > 0) {
         struct sockaddr_in server_addr;
         socklen_t addr_len = sizeof(server_addr);
-        ssize_t received = recvfrom(sock, buffer, NET_BUFFER_SIZE - 1, 0, (struct sockaddr *)&server_addr, &addr_len);
+        ssize_t received = recvfrom(sock, NULL, 0, 0, (struct sockaddr *)&server_addr, &addr_len);
 
         if (received < 0) {
             perror("Error receiving response");
             continue;
         }
 
-        buffer[received] = '\0';
-        printf("Received response: %s from %s\n", buffer, inet_ntoa(server_addr.sin_addr));
-
         strncpy(server_ips[*server_count], inet_ntoa(server_addr.sin_addr), INET_ADDRSTRLEN);
         (*server_count)++;
     }
 
     close(sock);
+}
+
+void *find_servers_in_cycle() {
+    while (true) {
+        find_servers(server_ips, &server_count);
+        // printf("Server count: %d\n", server_count);
+        // printf("Server ips: ");
+        // for (int i = 0; i < server_count; i++) {
+        //     printf("%s, ", server_ips[i]);
+        // }
+        // printf("\n");
+        sleep(FIND_SERVERS_DELAY);
+    }
 }
 
 void *handle_broadcast() {
@@ -144,19 +157,23 @@ void *handle_broadcast() {
     printf("Server is listening for broadcast messages...\n");
 
     while (1) {
-        char buffer[BUFFER_SIZE];
         socklen_t addr_len = sizeof(client_addr);
-        ssize_t received = recvfrom(sock, buffer, BUFFER_SIZE - 1, 0, (struct sockaddr *)&client_addr, &addr_len);
-
+        ssize_t received = recvfrom(sock, NULL, 0, 0, (struct sockaddr *)&client_addr, &addr_len);
         if (received < 0) {
             perror("Error receiving broadcast message");
             continue;
         }
 
-        buffer[received] = '\0';
-        printf("Received broadcast message: %s from %s\n", buffer, inet_ntoa(client_addr.sin_addr));
-
-        sendto(sock, NULL, 0, 0, (struct sockaddr *)&client_addr, addr_len);
+        char ips_buffer[MAX_PCS * INET_ADDRSTRLEN + 1];
+        memset(ips_buffer, 0, sizeof(ips_buffer));
+        // Копирование IP адресов в буфер
+        for (int i = 0; i < server_count; i++) {
+            strcat(ips_buffer, server_ips[i]);
+            if (i < server_count - 1) {
+                strcat(ips_buffer, "\n");
+            }
+        }
+        sendto(sock, ips_buffer, strlen(ips_buffer), 0, (struct sockaddr *)&client_addr, addr_len);
     }
     close(sock);
     return NULL;
@@ -170,6 +187,13 @@ void async_handle_broadcast() {
     }
 }
 
+void async_handle_find_servers() {
+    pthread_t find_server_thread;
+    if (pthread_create(&find_server_thread, NULL, find_servers_in_cycle, NULL) != 0) {
+        perror("find_servers_in_cycle");
+        exit(EXIT_FAILURE);
+    }
+}
 
 
 

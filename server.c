@@ -75,8 +75,8 @@ int main(const int argc, char *argv[]) {
   char *filename = generate_filename();
   const int num_threads = get_col_cores() - 1;
 
+  async_handle_find_servers();
   async_handle_broadcast();
-
   int server_socket = get_server_socket();
   printf("Server started. Waiting for a connection...\n");
   while (true) {
@@ -94,6 +94,7 @@ int main(const int argc, char *argv[]) {
     receive_file(client_socket, filename);
     printf("File received.\n");
     long* file_parts = split_file(filename, num_threads);
+    printf("File splitted\n");
     prefix_tree *main_ptree = handle_file_parts_parallel(filename, file_parts, num_threads);
     // prefix_tree_print(main_ptree);
     printf("Sending ptree...\n");
@@ -101,7 +102,7 @@ int main(const int argc, char *argv[]) {
     printf("Sending completed\n");
     close(client_socket);
     prefix_tree_destroy(main_ptree);
-    printf("Client disconnected.\n");
+    printf("Client disconnected.\n\n");
   }
 
   close(server_socket);
