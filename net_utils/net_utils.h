@@ -10,6 +10,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include <errno.h>
 
 #include "prefix_tree.h"
