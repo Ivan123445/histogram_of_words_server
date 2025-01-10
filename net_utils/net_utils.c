@@ -26,6 +26,7 @@ void send_ptree_recursive(const prefix_tree *tree, char *buffer, int depth, int 
     if (tree->words_here) {
         buffer[depth + 1] = '\0';
         struct ptree_word pword;
+        memset(pword.word, '\0', sizeof(char)*MAX_WORD_LENGTH);
         memcpy(&pword.word, buffer, strlen(buffer));
         pword.col_words = htons(tree->words_here);
 

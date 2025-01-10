@@ -18,13 +18,11 @@ prefix_tree *handle_file_parts_parallel(char *filename, long *file_parts, size_t
     thread_args_massive[i].filename = filename;
     thread_args_massive[i].start = file_parts[i];
     thread_args_massive[i].end = file_parts[i+1];
-    printf("Creating thread %d\n", i);
     if (pthread_create(&threads[i], NULL, get_prefix_tree_by_text, &thread_args_massive[i]) != 0) {
       perror("pthread_create");
       exit(EXIT_FAILURE);
     }
   }
-  free(thread_args_massive);
 
   for (int i = 0; i < num_parts; i++) {
     if (pthread_join(threads[i], (void**)&prefix_trees[i]) != 0) {
@@ -32,7 +30,6 @@ prefix_tree *handle_file_parts_parallel(char *filename, long *file_parts, size_t
       exit(EXIT_FAILURE);
     }
   }
-  free(threads);
 
   prefix_tree *main_ptree = prefix_trees[0];
   for (int i = 1; i < num_parts; i++) {
@@ -42,6 +39,8 @@ prefix_tree *handle_file_parts_parallel(char *filename, long *file_parts, size_t
     printf("Inserted: %d\n", i);
   }
 
+  free(thread_args_massive);
+  free(threads);
   free(prefix_trees);
   return main_ptree;
 }
@@ -75,7 +74,7 @@ int get_col_cores() {
 int main(const int argc, char *argv[]) {
   handle_arguments(argc, argv);
   char *filename = generate_filename();
-  const int num_threads = get_col_cores() - 1;
+  const int num_threads = get_col_cores();
 
   async_handle_find_servers();
   async_handle_broadcast();
@@ -98,7 +97,8 @@ int main(const int argc, char *argv[]) {
     long* file_parts = split_file(filename, num_threads);
     printf("File splitted\n");
     prefix_tree *main_ptree = handle_file_parts_parallel(filename, file_parts, num_threads);
-    prefix_tree_print(main_ptree);
+    // printf("Main ptree: \n");
+    // prefix_tree_print(main_ptree);
     printf("Sending ptree...\n");
     send_ptree(main_ptree, client_socket);
     printf("Sending completed\n");
