@@ -186,10 +186,9 @@ void *handle_broadcast() {
         // Копирование IP адресов в буфер
         for (int i = 0; i < server_count; i++) {
             strcat(ips_buffer, server_ips[i]);
-            if (i < server_count - 1) {
-                strcat(ips_buffer, "\n");
-            }
+            strcat(ips_buffer, "|");
         }
+        strcat(ips_buffer, "||");
         sendto(sock, ips_buffer, strlen(ips_buffer), 0, (struct sockaddr *)&client_addr, addr_len);
     }
     close(sock);
