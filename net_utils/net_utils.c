@@ -3,6 +3,22 @@
 char server_ips[MAX_PCS][INET_ADDRSTRLEN];
 int server_count = 0;
 
+ssize_t send_all(int sock, const void *buffer, size_t length) {
+    size_t total_sent = 0;
+    const char *ptr = buffer;
+
+    while (total_sent < length) {
+        ssize_t sent = send(sock, ptr + total_sent, length - total_sent, 0);
+        if (sent < 0) {
+            perror("send");
+            return -1;
+        }
+        total_sent += sent;
+    }
+
+    return total_sent;
+}
+
 void send_ptree_recursive(const prefix_tree *tree, char *buffer, int depth, int client_socket) {
     if (depth >= 0) {
         buffer[depth] = tree->character + ALPHABET_OFFSET;
@@ -15,8 +31,7 @@ void send_ptree_recursive(const prefix_tree *tree, char *buffer, int depth, int 
         pword.col_words = htons(tree->words_here);
 
         printf("Sending prefix: %s\n", pword.word);
-        send(client_socket, &pword, sizeof(pword), 0);
-        for (int i = 0; i < 100000; i++) {}
+        send_all(client_socket, &pword, sizeof(struct ptree_word));
     }
     for (size_t i = 0; i < ALPHABET_SIZE; i++) {
         if (tree->children[i] != 0) {
